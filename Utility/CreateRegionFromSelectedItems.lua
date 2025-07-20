@@ -1,6 +1,9 @@
 -- Start undo action
 reaper.Undo_BeginBlock()
 
+local ok, user_prefix = reaper.GetUserInputs("Titre", 1, "Préfixe:", "SW_")
+if not ok then return end
+
 -- Count for each combination of tracks + folder tracks 
 local counters = {}
 
@@ -36,7 +39,7 @@ for i = 0, item_count - 1 do
   local len = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
 
   -- Create region name
-  local region_name = string.format("SW_%s_%s_%02d", folder_name, track_name, counters[key])
+  local region_name = string.format("%s%s_%s_%02d",  user_prefix,  folder_name, track_name, counters[key])
 
   -- Create region
   reaper.AddProjectMarker2(0, true, pos, pos + len, region_name, -1, 0)
