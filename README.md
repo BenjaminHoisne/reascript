@@ -1,2 +1,2 @@
-# reascript
+# Reascript
 Repository for all my reascript !
