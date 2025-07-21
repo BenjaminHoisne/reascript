@@ -1,3 +1,7 @@
+-- Script : CreateRegionFromSelectedItems.lua
+-- Author : Benjamin Hoisne
+-- Description : Create regions from selected items, with a prefix and a counter for each combination of folder track and track.
+
 -- Start undo action
 reaper.Undo_BeginBlock()
 
