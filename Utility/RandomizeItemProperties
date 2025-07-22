@@ -1,0 +1,77 @@
+-- Script : RandomizeItemProperties.lua
+-- Author : Benjamin Hoisne
+-- Description : Randomize properties of selected items, such as volume, pan, pitch, and length.
+
+-- Start undo action
+reaper.Undo_BeginBlock()
+
+local item_count = reaper.CountSelectedMediaItems(0)
+if item_count == 0 then
+  reaper.ShowMessageBox("No items selected.", "Randomize Item Properties", 0)
+  return
+end
+
+local randomize_volume = true
+local randomize_pan = true
+local randomize_pitch = true
+local randomize_length = true
+
+-- Get user input for randomization options
+local retval, user_input = reaper.GetUserInputs("Randomize Item Properties", 4, "Volume,Pan,Pitch,Length", 
+                                                  tostring(randomize_volume) .. "," .. tostring(randomize_pan) .. "," .. 
+                                                  tostring(randomize_pitch) .. "," .. tostring(randomize_length))
+if not retval then return end
+
+-- User input to variables 
+local inputs = {}
+for input in user_input:gmatch("[^,]+") do
+    table.insert(inputs, input:lower() == "true")
+end
+local randomize_volume = inputs[1]
+local randomize_pan = inputs[2]
+local randomize_pitch = inputs[3]
+local randomize_length = inputs[4]
+math.randomseed(os.time())
+
+-- Randomize properties for each selected item
+for i = 0, item_count - 1 do
+    local item = reaper.GetSelectedMediaItem(0, i)
+
+    -- Randomize volume
+    if randomize_volume == true then 
+    local db = math.random() * -6 -- entre 0 et -6 dB
+    local volume = 10^(db / 20)
+    reaper.SetMediaItemInfo_Value(item, "D_VOL", volume)
+    end
+
+    -- Randomize pan
+    if randomize_pan == true then
+    local pan = math.random() * 2 - 1 
+    reaper.SetMediaItemInfo_Value(item, "D_PAN", pan)
+    end
+
+    -- Randomize pitch
+    if randomize_pitch == true then
+    local take = reaper.GetActiveTake(item)
+    if take and not reaper.TakeIsMIDI(take) then
+        local pitch = math.random(-12, 12) -- Demi-tons aléatoires
+        reaper.SetMediaItemTakeInfo_Value(take, "D_PITCH", pitch)
+    end
+    end
+
+    -- Randomize length
+    if randomize_length == true then
+    local length = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
+    local new_length = length * (1 + (math.random(-40, 40) / 100))
+    reaper.SetMediaItemInfo_Value(item, "D_LENGTH", new_length)
+
+    -- Update item position after length change
+    local position = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+    reaper.SetMediaItemInfo_Value(item, "D_POSITION", position + (new_length - length) / 2)
+    end
+
+    -- End of randomization for this item
+    reaper.UpdateItemInProject(item)
+    reaper.Undo_EndBlock("Randomize item properties for selected items", -1)
+    reaper.UpdateArrange()
+end
